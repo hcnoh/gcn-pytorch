@@ -11,11 +11,14 @@ DATASET_DIR = "datasets"
 
 
 class CitationNetworks(Dataset):
-    def __init__(self, dataset_dir=DATASET_DIR) -> None:
+    def __init__(self, dataset_dir=DATASET_DIR, directed=False) -> None:
         super().__init__()
 
         self.dataset_name = None    # will be defined in child classes
+
         self.dataset_dir = dataset_dir
+        self.directed = directed
+
         self.num_sample_per_class = 20
 
     def __getitem__(self, index):
@@ -60,7 +63,7 @@ class CitationNetworks(Dataset):
         class2idx = {c: i for i, c in enumerate(class_list)}
         num_classes = class_list.shape[0]
         Y = np.array(
-            class2idx[c] for c in content_df["Label"].values
+            [class2idx[c] for c in content_df["Label"].values]
         )
 
         drop_indices = []
@@ -77,10 +80,12 @@ class CitationNetworks(Dataset):
             to_ = row["To"]
             from_ = row["From"]
 
-            A[node2idx[to_], node2idx[from_]] += 1
+            A[node2idx[to_], node2idx[from_]] = 1
+            if not self.directed:
+                A[node2idx[from_], node2idx[to_]] = 1
 
         # Self Connection
-        A_tilde = A
+        A_tilde = np.copy(A)
         for i in range(A_tilde.shape[0]):
             A_tilde[i, i] = 1
 
@@ -116,14 +121,29 @@ class Citeseer(CitationNetworks):
 
         self.dataset_name = "citeseer"
         self.dataset_dir = os.path.join(self.dataset_dir, self.dataset_name)
+        if self.directed:
+            self.preprocessed_dir = os.path.join(
+                self.dataset_dir, "directed"
+            )
+        else:
+            self.preprocessed_dir = os.path.join(
+                self.dataset_dir, "undirected"
+            )
 
-        if os.path.exists(os.path.join(self.dataset_dir, "dataset.pkl")):
+        if not os.path.exists(self.preprocessed_dir):
+            os.mkdir(self.preprocessed_dir)
+
+        if os.path.exists(os.path.join(self.preprocessed_dir, "dataset.pkl")):
             with open(
-                os.path.join(self.dataset_dir, "dataset.pkl"), "rb"
+                os.path.join(self.preprocessed_dir, "dataset.pkl"), "rb"
             ) as f:
                 dataset = pickle.load(f)
         else:
             dataset = self.preprocess()
+            with open(
+                os.path.join(self.preprocessed_dir, "dataset.pkl"), "wb"
+            ) as f:
+                pickle.dump(dataset, f)
 
         self.A, self.A_hat, self.X, self.Y, self.node_list, self.node2idx, \
             self.num_nodes, self.num_feature_maps, self.class_list, \

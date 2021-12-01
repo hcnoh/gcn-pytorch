@@ -1,0 +1,12 @@
+{
+    "train_config": {
+        "num_epochs": 400,
+        "learning_rate": 0.01
+    },
+    "model_config": {
+        "H": 16,
+        "num_layers": 2,
+        "dropout": 0.5,
+        "regularization": 0.0005
+    }
+}
