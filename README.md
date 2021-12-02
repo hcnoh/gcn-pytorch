@@ -8,7 +8,7 @@ In this repository, there are 2 datasets provided to train the GCN model:
     - Citeseer
     - Cora
 
-Two datasets can be downloaded in [here](https://linqs.soe.ucsc.edu/data). The downloaded datasets should be unziped and restored into a directory named `datasets`. The following tree shows the path to each files in the datasets:
+The two datasets can be downloaded in [here](https://linqs.soe.ucsc.edu/data). The downloaded datasets should be unziped and restored into a directory named `datasets`. The following tree shows the path to each files in the datasets:
 
 ```
 datasets
