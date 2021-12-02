@@ -5,9 +5,7 @@ import pickle
 
 import torch
 
-from torch.utils.data import DataLoader, random_split
-
-from data_loaders.citation_networks import Citeseer
+from data_loaders.citation_networks import Citeseer, Cora
 
 from models.gcn import GCN
 
@@ -44,7 +42,9 @@ def main(dataset_name, directed):
     regularization = model_config["regularization"]
 
     if dataset_name == "citeseer":
-        dataset = Citeseer()
+        dataset = Citeseer(directed=directed)
+    elif dataset_name == "cora":
+        dataset = Cora(directed=directed)
 
     if torch.cuda.is_available():
         device = "cuda"
@@ -59,32 +59,19 @@ def main(dataset_name, directed):
     model = GCN(
         dataset.A_hat, dataset.num_feature_maps, H, dataset.num_classes,
         num_layers, dropout, regularization
-    )
+    ).to(device)
 
-    model.train_model(
+    accs, train_losses, test_losses = model.train_model(
         num_epochs, learning_rate, dataset, dataset.train_indices,
-        dataset.test_indices
+        dataset.test_indices, ckpt_path
     )
 
-    # train_size = dataset.train_indices.shape[0]
-    # test_size = dataset.test_indices.shape[0]
-
-    # train_dataset, test_dataset = random_split(
-    #     dataset, [train_size, test_size]
-    # )
-
-    # train_dataset.indices = dataset.train_indices
-    # test_dataset.indices = dataset.test_indices
-
-    # train_loader = DataLoader(
-    #     train_dataset, batch_size=train_size, shuffle=False
-    # )
-    # test_loader = DataLoader(
-    #     test_dataset, batch_size=test_size, shuffle=False
-    # )
-
-    # print(train_dataset.indices)
-    # print(train_loader.indices)
+    with open(os.path.join(ckpt_path, "accs.pkl"), "wb") as f:
+        pickle.dump(accs, f)
+    with open(os.path.join(ckpt_path, "train_losses.pkl"), "wb") as f:
+        pickle.dump(train_losses, f)
+    with open(os.path.join(ckpt_path, "test_losses.pkl"), "wb") as f:
+        pickle.dump(test_losses, f)
 
 
 if __name__ == "__main__":

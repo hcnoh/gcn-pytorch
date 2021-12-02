@@ -1,6 +1,6 @@
 {
     "train_config": {
-        "num_epochs": 400,
+        "num_epochs": 200,
         "learning_rate": 0.01
     },
     "model_config": {
